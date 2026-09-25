@@ -1,7 +1,7 @@
 import gql from "graphql-tag";
 
 export const typeDefs = gql`
-  // Product related types
+  # Product related types
   type Product {
     id: ID!
     name: String!
@@ -14,7 +14,7 @@ export const typeDefs = gql`
     product(id: ID!): Product
   }
 
-  // Sale related types
+  # Sale related types
   type SaleItem {
     productId: ID!
     quantity: Int!
@@ -31,27 +31,25 @@ export const typeDefs = gql`
   }
 
   enum PaymentMethod {
-  DINHEIRO
-  PIX
-  CARTAO_CREDITO
-  CARTAO_DEBITO
-}
-  
-input SaleItemInput {
-  productId: ID!
-  quantity: Int!
-}
+    DINHEIRO
+    PIX
+    CARTAO_CREDITO
+    CARTAO_DEBITO
+  }
 
-input CreateSaleInput {
-  payment: PaymentMethod!
-  observation: String
-  customerId: ID
-  products: [SaleItemInput!]!
-}
+  input SaleItemInput {
+    productId: ID!
+    quantity: Int!
+  }
 
-type Mutation {
-  createSale(input: CreateSaleInput!): Sale!
-}
+  input CreateSaleInput {
+    payment: PaymentMethod!
+    observation: String
+    customerId: ID
+    products: [SaleItemInput!]!
+  }
 
-  
+  type Mutation {
+    createSale(input: CreateSaleInput!): Sale!
+  }
 `;
