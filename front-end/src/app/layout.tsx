@@ -8,6 +8,7 @@ import {
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Providers } from "./providers";
+import { CartProvider } from "../context/CartContext";
 
 const playfairDisplayHeading = Playfair_Display({
   subsets: ["latin"],
@@ -45,7 +46,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         playfairDisplayHeading.variable,
       )}>
       <body className="min-h-full flex flex-col">
-        <Providers>{children}</Providers>
+        <Providers>
+          <CartProvider>{children}</CartProvider>
+        </Providers>
       </body>
     </html>
   );

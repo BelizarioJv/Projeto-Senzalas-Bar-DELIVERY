@@ -1,8 +1,8 @@
 export type Product = {
-  id: string;
+  id: number;
   name: string;
   salePrice: number;
-  currentQuantity: number;
+  quantity: number;
 };
 
 export type ProductsQueryResponse = {
