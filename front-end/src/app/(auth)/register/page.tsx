@@ -1,12 +1,11 @@
 "use client";
 
-import { useActionState, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { useActionState, useState } from "react";
 import { register, loginWithGoogle } from "@/app/actions/auth";
 import { BeerGlass } from "@/components/ui/brand/beer-glass";
 import { EyeIcon, GoogleIcon } from "@/components/ui/icons/auth-icons";
-
-const APP_NAME = "Sua Marca";
 
 const inputClass =
   "h-11 w-full rounded-lg border border-input bg-background px-3.5 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30 disabled:opacity-60";
@@ -16,20 +15,26 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <main className="flex min-h-svh items-center justify-center bg-background p-4 text-foreground sm:p-8">
-      <div className="grid w-full max-w-5xl overflow-hidden rounded-3xl border border-border bg-background shadow-2xl shadow-black/10 lg:min-h-[42rem] lg:grid-cols-[1.05fr_1fr]">
-        <aside className="dark relative hidden flex-col justify-between overflow-hidden bg-background p-10 text-foreground lg:flex">
+    <main className="flex min-h-svh items-center justify-center bg-zinc-950 p-4 text-zinc-50 sm:p-8">
+      <div className="dark grid w-full max-w-5xl overflow-hidden rounded-3xl border border-border bg-background text-foreground shadow-2xl shadow-black/20 lg:min-h-[42rem] lg:grid-cols-[1.05fr_1fr]">
+        <aside className="relative hidden flex-col justify-between overflow-hidden bg-background p-10 text-foreground lg:flex">
           <div
             aria-hidden="true"
             className="pointer-events-none absolute left-1/2 top-1/2 size-[26rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/20 blur-3xl"
           />
 
-          <p className="relative font-heading text-2xl font-semibold tracking-tight text-primary">
-            {APP_NAME}
-          </p>
+          <div className="flex items-center gap-2">
+            <Image
+              src="/LogoSenzalasBar.png"
+              alt="SenzalasBar"
+              width={200}
+              height={80}
+              priority
+            />
+          </div>
 
-          <div className="relative flex flex-col items-center gap-8">
-            <BeerGlass className="h-auto w-full max-w-[14rem]" />
+          <div className="relative flex flex-col items-center gap-5 xl:gap-6">
+            <BeerGlass className="h-72 w-auto lg:h-64 xl:h-80 2xl:h-80" />
             <div className="max-w-sm text-center">
               <h2 className="font-heading text-3xl font-semibold leading-tight tracking-tight text-balance">
                 Seu pedido favorito a um clique.
@@ -49,7 +54,7 @@ export default function RegisterPage() {
           <div className="w-full max-w-sm">
             <p className="mb-8 font-heading text-xl font-semibold tracking-tight lg:hidden">
               <span className="mr-2 inline-block size-2.5 rounded-full bg-primary align-middle" />
-              {APP_NAME}
+              SenzalasBar
             </p>
 
             <h1 className="font-heading text-3xl font-semibold tracking-tight">
