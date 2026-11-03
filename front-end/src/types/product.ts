@@ -3,8 +3,14 @@ export type Product = {
   name: string;
   salePrice: number;
   quantity: number;
+  imageUrl?: string | null;
 };
 
 export type ProductsQueryResponse = {
-  products: Product[];
+  products: Array<
+    Omit<Product, "id" | "quantity"> & {
+      id: string | number;
+      currentQuantity: number;
+    }
+  >;
 };

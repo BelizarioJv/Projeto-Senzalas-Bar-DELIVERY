@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import { Minus, Plus, Search, ShoppingBag, Trash2 } from "lucide-react";
 import { useProducts } from "@/hooks/useProducts";
@@ -9,6 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCart } from "@/context/CartContext";
 import { useRouter } from "next/navigation";
+import type { Product } from "@/types/product";
+import { useProductQuantities } from "@/hooks/useProductQuantities";
 
 const currency = new Intl.NumberFormat("pt-BR", {
   style: "currency",
@@ -20,11 +23,11 @@ export default function Home() {
   const { data, isLoading, isError, refetch } = useProducts();
   const [search, setSearch] = useState("");
   const { cart, addToCart, removeFromCart, clearProductCompletely } = useCart();
-
-  // Estado local para gerenciar as quantidades selecionadas em cada card do produto
-  const [selectedQuantities, setSelectedQuantities] = useState<
-    Record<number, number>
-  >({});
+  const {
+    getSelectedQuantity,
+    incrementQuantity,
+    decrementQuantity,
+  } = useProductQuantities();
 
   const products = (data?.products ?? []).filter((product) =>
     product.name.toLowerCase().includes(search.toLowerCase()),
@@ -36,28 +39,7 @@ export default function Home() {
   );
   const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  // Auxiliares para controle de quantidade local por produto
-  const getSelectedQuantity = (productId: number) => {
-    return selectedQuantities[productId] ?? 1;
-  };
-
-  const handleIncrement = (productId: number, maxQuantity: number) => {
-    setSelectedQuantities((prev) => {
-      const current = prev[productId] ?? 1;
-      if (current >= maxQuantity) return prev;
-      return { ...prev, [productId]: current + 1 };
-    });
-  };
-
-  const handleDecrement = (productId: number) => {
-    setSelectedQuantities((prev) => {
-      const current = prev[productId] ?? 1;
-      if (current <= 1) return prev;
-      return { ...prev, [productId]: current - 1 };
-    });
-  };
-
-  const handleAddToCart = (product: any) => {
+  const handleAddToCart = (product: Product) => {
     const qty = getSelectedQuantity(product.id);
     addToCart({ ...product, quantity: qty });
   };
@@ -66,13 +48,14 @@ export default function Home() {
     <main className="min-h-screen bg-background">
       <header className="border-b bg-foreground text-background">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 lg:px-8">
-          <div>
-            <p className="font-heading text-2xl font-semibold text-primary">
-              Senzala&apos;s
-            </p>
-            <p className="text-xs uppercase tracking-[0.2em] text-background/60">
-              Delivery
-            </p>
+          <div className="flex items-center gap-2">
+            <Image
+              src="/LogoSenzalasBar.png"
+              alt="SenzalasBar"
+              width={150}
+              height={44}
+              priority
+            />
           </div>
           <div className="flex items-center gap-2 text-sm text-background/80">
             <ShoppingBag className="size-5 text-primary" />
@@ -143,7 +126,17 @@ export default function Home() {
                   key={product.id}
                   className="overflow-hidden transition-shadow hover:shadow-md">
                   <div className="flex h-28 items-center justify-center bg-primary/10 text-4xl">
-                    Produto
+                    {product.imageUrl ? (
+                      <img
+                        src={product.imageUrl}
+                        alt={product.name}
+                        className="size-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-sm font-medium text-muted-foreground">
+                        Sem imagem
+                      </span>
+                    )}
                   </div>
                   <CardContent className="p-4">
                     <h2 className="font-semibold">{product.name}</h2>
@@ -162,7 +155,7 @@ export default function Home() {
                           variant="ghost"
                           className="size-8"
                           disabled={isOutOfStock || selectedQty <= 1}
-                          onClick={() => handleDecrement(product.id)}>
+                          onClick={() => decrementQuantity(product.id)}>
                           <Minus className="size-4" />
                         </Button>
 
@@ -178,7 +171,7 @@ export default function Home() {
                             isOutOfStock || selectedQty >= product.quantity
                           }
                           onClick={() =>
-                            handleIncrement(product.id, product.quantity)
+                            incrementQuantity(product.id, product.quantity)
                           }>
                           <Plus className="size-4" />
                         </Button>

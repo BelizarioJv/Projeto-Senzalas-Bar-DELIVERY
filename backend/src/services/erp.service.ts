@@ -9,6 +9,7 @@ const apiErp = axios.create({
 });
 
 let token: string | null = null;
+
 export async function loginERP() {
   try {
     const response = await axios.post(`${ERP_URL}/login`, {
@@ -22,6 +23,19 @@ export async function loginERP() {
   }
 }
 
+// Resolve a URL de imagem do produto
+async function resolveImageUrl(productId: string, imageUrl?: string | null) {
+  if (!imageUrl) return null;
+  if (/^https?:\/\//i.test(imageUrl)) return imageUrl;
+  if (!imageUrl.startsWith("s3://")) return imageUrl;
+
+  const response = await apiErp.get(`/products/${productId}/image-url`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  return response.data.imageUrl ?? null;
+}
+
 // Buscar produtos no ERP
 export async function fetchProducts() {
   try {
@@ -30,12 +44,15 @@ export async function fetchProducts() {
       params: { page: 1, pageSize: 10 },
       headers: { Authorization: `Bearer ${token}` },
     });
-    return res.data.data.map((p: IProduct) => ({
-      id: String(p.id),
-      name: p.name,
-      salePrice: Number(p.salePrice),
-      currentQuantity: p.currentQuantity,
-    }));
+    return Promise.all(
+      res.data.data.map(async (p: IProduct) => ({
+        id: String(p.id),
+        name: p.name,
+        salePrice: Number(p.salePrice),
+        currentQuantity: p.currentQuantity,
+        imageUrl: await resolveImageUrl(String(p.id), p.imageUrl),
+      })),
+    );
   } catch (err: any) {
     throw new Error(
       `ERP products failed: ${err.response?.status || err.message}`,
@@ -56,6 +73,7 @@ export async function fetchProductById(id: string) {
       name: p.name,
       salePrice: Number(p.salePrice),
       currentQuantity: p.currentQuantity,
+      imageUrl: await resolveImageUrl(String(p.id), p.imageUrl),
     };
   } catch (err: any) {
     if (err.response?.status === 404) return null;

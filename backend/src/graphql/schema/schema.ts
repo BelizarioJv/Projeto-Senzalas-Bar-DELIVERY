@@ -7,6 +7,7 @@ export const typeDefs = gql`
     name: String!
     salePrice: Float!
     currentQuantity: Int!
+    imageUrl: String
   }
 
   type Query {

@@ -1,7 +1,7 @@
 // app/layout.tsx
 import type { Metadata } from "next";
 import { Providers } from "@/app/providers";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/graphQl/utils";
 import { Geist_Mono, Noto_Sans, Playfair_Display } from "next/font/google";
 import "@/app/globals.css";
 

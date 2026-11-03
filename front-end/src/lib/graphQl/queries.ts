@@ -5,6 +5,7 @@ export const PRODUCTS_QUERY = `
       name
       salePrice
       currentQuantity
+      imageUrl
     }
   }
 `;

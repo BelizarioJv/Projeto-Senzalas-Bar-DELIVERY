@@ -1,13 +1,24 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { graphqlClient } from "@/lib/graphql-client";
-import { PRODUCTS_QUERY } from "@/lib/queries";
+import { graphqlClient } from "@/lib/graphQl/graphql-client";
+import { PRODUCTS_QUERY } from "@/lib/graphQl/queries";
 import type { ProductsQueryResponse } from "@/types/product";
 
 export function useProducts() {
   return useQuery({
     queryKey: ["products"],
-    queryFn: () => graphqlClient.request<ProductsQueryResponse>(PRODUCTS_QUERY),
+    queryFn: async () => {
+      const response =
+        await graphqlClient.request<ProductsQueryResponse>(PRODUCTS_QUERY);
+
+      return {
+        products: response.products.map((product) => ({
+          ...product,
+          id: Number(product.id),
+          quantity: product.currentQuantity,
+        })),
+      };
+    },
   });
 }
