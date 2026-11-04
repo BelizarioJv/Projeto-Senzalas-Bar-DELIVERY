@@ -25,4 +25,7 @@ export interface DeliveryAddress {
   created_at: string;
 }
 
-export type NewDeliveryAddress = Omit<DeliveryAddress, "id" | "created_at">;
+export type NewDeliveryAddress = Omit<
+  DeliveryAddress,
+  "id" | "created_at"
+>;

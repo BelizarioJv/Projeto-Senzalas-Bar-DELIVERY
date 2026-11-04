@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 import { Minus, Plus, Search, ShoppingBag, Trash2 } from "lucide-react";
 import { useProducts } from "@/hooks/useProducts";
@@ -23,11 +24,8 @@ export default function Home() {
   const { data, isLoading, isError, refetch } = useProducts();
   const [search, setSearch] = useState("");
   const { cart, addToCart, removeFromCart, clearProductCompletely } = useCart();
-  const {
-    getSelectedQuantity,
-    incrementQuantity,
-    decrementQuantity,
-  } = useProductQuantities();
+  const { getSelectedQuantity, incrementQuantity, decrementQuantity } =
+    useProductQuantities();
 
   const products = (data?.products ?? []).filter((product) =>
     product.name.toLowerCase().includes(search.toLowerCase()),
@@ -46,6 +44,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-background">
+      {/* Header */}
       <header className="border-b bg-foreground text-background">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 lg:px-8">
           <div className="flex items-center gap-2">
@@ -58,8 +57,10 @@ export default function Home() {
             />
           </div>
           <div className="flex items-center gap-2 text-sm text-background/80">
-            <ShoppingBag className="size-5 text-primary" />
-            <span>{itemCount} item(ns)</span>
+            <Link href="/carrinho" className="flex items-center gap-2">
+              <ShoppingBag className="size-5 text-primary" />
+              <span>{itemCount} item(ns)</span>
+            </Link>
           </div>
         </div>
       </header>
