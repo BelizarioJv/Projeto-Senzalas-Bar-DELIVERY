@@ -1,9 +1,7 @@
 import {
   fetchProducts,
   fetchProductById,
-  createSale,
-} from "../../services/erp.service.js";
-import { SaleInput } from "../../types/sale.js";
+} from "../../services/erp-product.service.js";
 
 export const resolvers = {
   Query: {
@@ -11,8 +9,4 @@ export const resolvers = {
     product: (_: unknown, args: { id: string }) => fetchProductById(args.id),
   },
 
-  Mutation: {
-    createSale: (_: unknown, args: { input: SaleInput }) =>
-      createSale(args.input),
-  },
 };

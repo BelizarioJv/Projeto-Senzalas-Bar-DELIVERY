@@ -10,11 +10,11 @@ export interface ISale {
 
 // Tipagem para criação de venda no ERP
 export interface SaleInput {
-  payment: string;
-  customerId?: string | null;
+  payment: "DINHEIRO" | "PIX" | "CARTAO_CREDITO" | "CARTAO_DEBITO";
+  customerId?: number | null;
   observation?: string;
   products: {
-    productId: string;
+    productId: number;
     quantity: number;
   }[];
 }

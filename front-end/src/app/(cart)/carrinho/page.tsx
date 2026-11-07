@@ -37,6 +37,8 @@ export default function CartPage() {
   const [paymentMethod, setPaymentMethod] = useState<"pix" | "card" | "cash">(
     "pix",
   );
+
+  // Estados locais do formulário de endereço
   const [address, setAddress] = useState({
     postalCode: "",
     street: "",
@@ -53,6 +55,7 @@ export default function CartPage() {
   const [addressError, setAddressError] = useState("");
   const [savingAddress, setSavingAddress] = useState(false);
 
+  // Carregar endereços salvos do usuário ao montar o componente
   useEffect(() => {
     getDeliveryAddresses()
       .then((savedAddresses) => {
@@ -154,7 +157,7 @@ export default function CartPage() {
         </h1>
 
         {cart.length === 0 ? (
-          /* Estado Vazio */
+          /* Estado carrinho vazio */
           <div className="mt-12 flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
             <ShoppingBag className="size-16 text-muted-foreground/50" />
             <h2 className="mt-4 text-xl font-semibold">
