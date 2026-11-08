@@ -26,11 +26,11 @@ const currency = new Intl.NumberFormat("pt-BR", {
 });
 
 export default function CartPage() {
+  // Contexto do Carrinho e Checkout
   const { cart, addToCart, removeFromCart, clearProductCompletely } = useCart();
   const clearCart = () => {
     cart.forEach((item) => clearProductCompletely(item.id));
   };
-  const createSale = useCreateSale({ onSuccess: clearCart });
   const {
     paymentMethod,
     setPaymentMethod,
@@ -46,7 +46,10 @@ export default function CartPage() {
     addAddress,
   } = useDeliveryCheckout();
 
-  // Cálculos financeiros
+  // Hook para criar a venda
+  const createSale = useCreateSale({ onSuccess: clearCart });
+
+  // Cálculos financeiros e totais do pedido por enquanto usando frete fixo para depois ver como calcular por area e fora de area de entrega
   const subtotal = cart.reduce(
     (sum, item) => sum + item.salePrice * item.quantity,
     0,
@@ -54,6 +57,7 @@ export default function CartPage() {
   const deliveryFee = cart.length > 0 ? 7.0 : 0.0; // Exemplo de taxa de entrega fixa
   const total = subtotal + deliveryFee;
 
+  // Função para finalizar o pedido
   const handleFinishOrder = async () => {
     if (createSale.isPending) return;
 

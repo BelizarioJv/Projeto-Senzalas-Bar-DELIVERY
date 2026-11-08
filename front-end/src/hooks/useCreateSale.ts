@@ -5,18 +5,24 @@ import { createDeliverySale } from "@/services/apiERP/sale.service";
 import type { CreateDeliverySaleData } from "@/types/sale";
 import { isAxiosError } from "axios";
 import { toast } from "sonner";
+import { useRef } from "react";
 
 interface UseCreateSaleOptions {
   onSuccess?: () => void;
 }
 
+//hook para criar uma venda de delivery
 export function useCreateSale(options?: UseCreateSaleOptions) {
+  const idempotencyKey = useRef(crypto.randomUUID());
+
   return useMutation({
     mutationKey: ["delivery-sale", "create"],
-    mutationFn: (data: CreateDeliverySaleData) => createDeliverySale(data),
+    mutationFn: (data: CreateDeliverySaleData) =>
+      createDeliverySale(data, idempotencyKey.current),
     onSuccess: () => {
       toast.success("Pedido enviado com sucesso!");
       options?.onSuccess?.();
+      idempotencyKey.current = crypto.randomUUID();
     },
     onError: (error) => {
       if (isAxiosError(error)) {

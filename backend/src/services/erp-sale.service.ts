@@ -5,11 +5,17 @@ import {
   erpRequest,
 } from "./erp-auth.service.js";
 
-export async function createSale(saleData: SaleInput) {
+export async function createSale(
+  saleData: SaleInput,
+  idempotencyKey: string,
+) {
   try {
     return await erpRequest((currentToken) =>
       erpClient.post("/delivery", saleData, {
-        headers: authorizationHeaders(currentToken),
+        headers: {
+          ...authorizationHeaders(currentToken),
+          "Idempotency-Key": idempotencyKey,
+        },
       }),
     );
   } catch (err: any) {
