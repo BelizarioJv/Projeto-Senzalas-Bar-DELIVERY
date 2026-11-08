@@ -100,7 +100,8 @@ export default function CartPage() {
 
     const paymentByDeliveryMethod = {
       pix: "PIX",
-      card: "CARTAO_CREDITO",
+      online_card: "CARTAO_CREDITO",
+      delivery_card: "CARTAO_CREDITO",
       cash: "DINHEIRO",
     } as const;
 
@@ -115,12 +116,16 @@ export default function CartPage() {
       .join(" | ");
 
     createSale.mutate({
-      payment: paymentByDeliveryMethod[paymentMethod],
-      observation: `Delivery: ${deliveryAddress}`,
-      products: cart.map((item) => ({
-        productId: item.id,
-        quantity: item.quantity,
-      })),
+      checkoutOnline:
+        paymentMethod === "pix" || paymentMethod === "online_card",
+      data: {
+        payment: paymentByDeliveryMethod[paymentMethod],
+        observation: `Delivery: ${deliveryAddress}`,
+        products: cart.map((item) => ({
+          productId: item.id,
+          quantity: item.quantity,
+        })),
+      },
     });
   };
 
@@ -287,43 +292,91 @@ export default function CartPage() {
                   <CardTitle className="text-lg">Forma de Pagamento</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="grid gap-3 sm:grid-cols-2">
                     <button
                       type="button"
                       onClick={() => setPaymentMethod("pix")}
                       className={`flex flex-col items-center justify-center gap-2 rounded-lg border p-4 text-center transition-colors ${
-                        paymentMethod === "pix"
-                          ? "border-primary bg-primary/10 font-semibold text-primary"
-                          : "border-input hover:bg-accent"
-                      }`}>
-                      <QrCode className="size-6" />
-                      <span className="text-sm">PIX</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod("card")}
-                      className={`flex flex-col items-center justify-center gap-2 rounded-lg border p-4 text-center transition-colors ${
-                        paymentMethod === "card"
+                        paymentMethod === "pix" ||
+                        paymentMethod === "online_card"
                           ? "border-primary bg-primary/10 font-semibold text-primary"
                           : "border-input hover:bg-accent"
                       }`}>
                       <CreditCard className="size-6" />
-                      <span className="text-sm">Cartão na entrega</span>
+                      <span className="text-sm">Pagar online</span>
                     </button>
 
                     <button
                       type="button"
-                      onClick={() => setPaymentMethod("cash")}
+                      onClick={() => setPaymentMethod("delivery_card")}
                       className={`flex flex-col items-center justify-center gap-2 rounded-lg border p-4 text-center transition-colors ${
+                        paymentMethod === "delivery_card" ||
                         paymentMethod === "cash"
                           ? "border-primary bg-primary/10 font-semibold text-primary"
                           : "border-input hover:bg-accent"
                       }`}>
                       <DollarSign className="size-6" />
-                      <span className="text-sm">Dinheiro</span>
+                      <span className="text-sm">Pagar na entrega</span>
                     </button>
                   </div>
+
+                  {(paymentMethod === "pix" ||
+                    paymentMethod === "online_card") && (
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod("pix")}
+                        className={`flex flex-col items-center justify-center gap-2 rounded-lg border p-4 ${
+                          paymentMethod === "pix"
+                            ? "border-primary bg-primary/10 font-semibold text-primary"
+                            : "border-input hover:bg-accent"
+                        }`}>
+                        <QrCode className="size-6" />
+                        <span className="text-sm">PIX</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod("online_card")}
+                        className={`flex flex-col items-center justify-center gap-2 rounded-lg border p-4 ${
+                          paymentMethod === "online_card"
+                            ? "border-primary bg-primary/10 font-semibold text-primary"
+                            : "border-input hover:bg-accent"
+                        }`}>
+                        <CreditCard className="size-6" />
+                        <span className="text-sm">Cartão online</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {(paymentMethod === "delivery_card" ||
+                    paymentMethod === "cash") && (
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod("delivery_card")}
+                        className={`flex flex-col items-center justify-center gap-2 rounded-lg border p-4 ${
+                          paymentMethod === "delivery_card"
+                            ? "border-primary bg-primary/10 font-semibold text-primary"
+                            : "border-input hover:bg-accent"
+                        }`}>
+                        <CreditCard className="size-6" />
+                        <span className="text-sm">Cartão na entrega</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod("cash")}
+                        className={`flex flex-col items-center justify-center gap-2 rounded-lg border p-4 ${
+                          paymentMethod === "cash"
+                            ? "border-primary bg-primary/10 font-semibold text-primary"
+                            : "border-input hover:bg-accent"
+                        }`}>
+                        <DollarSign className="size-6" />
+                        <span className="text-sm">Dinheiro</span>
+                      </button>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>

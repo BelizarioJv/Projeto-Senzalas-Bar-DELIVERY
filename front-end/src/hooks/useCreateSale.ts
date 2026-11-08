@@ -1,7 +1,10 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { createDeliverySale } from "@/services/apiERP/sale.service";
+import {
+  createDeliveryCheckout,
+  createDeliverySale,
+} from "@/services/apiERP/sale.service";
 import type { CreateDeliverySaleData } from "@/types/sale";
 import { isAxiosError } from "axios";
 import { toast } from "sonner";
@@ -11,14 +14,33 @@ interface UseCreateSaleOptions {
   onSuccess?: () => void;
 }
 
+interface CreateSaleVariables {
+  data: CreateDeliverySaleData;
+  checkoutOnline: boolean;
+}
+
 //hook para criar uma venda de delivery
 export function useCreateSale(options?: UseCreateSaleOptions) {
   const idempotencyKey = useRef(crypto.randomUUID());
 
+  //Mutatation para criar uma venda de delivery redirecionando para o checkout do Mercado Pago caso o método de pagamento seja PIX ou CARTAO_CREDITO
   return useMutation({
     mutationKey: ["delivery-sale", "create"],
-    mutationFn: (data: CreateDeliverySaleData) =>
-      createDeliverySale(data, idempotencyKey.current),
+    mutationFn: async ({ data, checkoutOnline }: CreateSaleVariables) => {
+      if (
+        checkoutOnline &&
+        (data.payment === "PIX" || data.payment === "CARTAO_CREDITO")
+      ) {
+        const checkout = await createDeliveryCheckout(
+          data,
+          idempotencyKey.current,
+        );
+        window.location.assign(checkout.checkoutUrl);
+        return;
+      }
+
+      return createDeliverySale(data, idempotencyKey.current);
+    },
     onSuccess: () => {
       toast.success("Pedido enviado com sucesso!");
       options?.onSuccess?.();

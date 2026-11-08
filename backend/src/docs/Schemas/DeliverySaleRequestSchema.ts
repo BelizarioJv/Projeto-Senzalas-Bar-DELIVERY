@@ -17,3 +17,7 @@ export const deliverySaleSchema = z.object({
     )
     .min(1),
 });
+
+export const deliveryCheckoutSchema = deliverySaleSchema.extend({
+  payment: z.enum(["PIX", "CARTAO_CREDITO"]),
+});

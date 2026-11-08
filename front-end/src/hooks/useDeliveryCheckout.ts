@@ -9,7 +9,11 @@ import {
 import type { DeliveryAddress, NewDeliveryAddress } from "@/app/actions/types/Customer";
 import type { DeliveryAddressValues } from "@/components/DeliveryAddressDialog";
 
-export type DeliveryPaymentMethod = "pix" | "card" | "cash";
+export type DeliveryPaymentMethod =
+  | "pix"
+  | "online_card"
+  | "delivery_card"
+  | "cash";
 
 const emptyAddress = {
   postalCode: "",

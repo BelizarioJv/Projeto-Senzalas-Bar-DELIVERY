@@ -11,3 +11,15 @@ export async function createDeliverySale(
   });
   return response.data;
 }
+
+export async function createDeliveryCheckout(
+  data: CreateDeliverySaleData,
+  idempotencyKey: string,
+) {
+  const response = await deliveryApi.post(
+    "/delivery/sales/checkout",
+    data,
+    { headers: { "Idempotency-Key": idempotencyKey } },
+  );
+  return response.data as { checkoutUrl: string };
+}

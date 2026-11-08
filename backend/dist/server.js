@@ -1,0 +1,24 @@
+import express from "express";
+import cors from "cors";
+import "dotenv/config";
+import { expressMiddleware } from "@as-integrations/express5";
+import { ApolloServer } from "@apollo/server";
+import { resolvers } from "./graphql/resolver/resolvers.js";
+import { typeDefs } from "./graphql/schema/schema.js";
+import { deliverySaleRouter } from "./routes/deliverySaleRoutes.js";
+//Inicalizaçao do server
+const app = express();
+const apollo = new ApolloServer({ typeDefs, resolvers });
+await apollo.start();
+//Configuraçao do server
+app.use(express.json());
+app.use(cors());
+//Configuraçao do GraphQL
+app.use("/graphql", expressMiddleware(apollo));
+//Configuraçao das rotas vendas
+app.use("/delivery/sales", deliverySaleRouter);
+// ---------------------------------
+const PORT = process.env.PORT || 8081;
+app.listen(PORT, () => {
+    console.log(`Servidor rodando em http://localhost:${PORT}`);
+});
