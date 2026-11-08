@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/services/supabase/server";
 import type { DeliveryAddress, NewDeliveryAddress } from "./types/Customer";
 
 async function getAuthenticatedCustomer() {

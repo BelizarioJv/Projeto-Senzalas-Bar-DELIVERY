@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/services/supabase/server";
 import { loginSchema, registerSchema } from "./schemas/AuthSchema";
 
 // Função para obter a URL do site, usada para redirecionamentos após login ou registro

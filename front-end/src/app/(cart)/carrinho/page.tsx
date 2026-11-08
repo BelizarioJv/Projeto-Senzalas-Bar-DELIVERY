@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import {
   ArrowLeft,
   CreditCard,
@@ -16,14 +15,10 @@ import {
 import { useCart } from "@/context/CartContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  getDeliveryAddresses,
-  saveDeliveryAddress,
-} from "@/app/actions/delivery";
-import type { DeliveryAddress } from "@/app/actions/types/Customer";
-import DeliveryAddressDialog, {
-  type DeliveryAddressValues,
-} from "@/components/DeliveryAddressDialog";
+import DeliveryAddressDialog from "@/components/DeliveryAddressDialog";
+import { useCreateSale } from "@/hooks/useCreateSale";
+import { toast } from "sonner";
+import { useDeliveryCheckout } from "@/hooks/useDeliveryCheckout";
 
 const currency = new Intl.NumberFormat("pt-BR", {
   style: "currency",
@@ -32,85 +27,24 @@ const currency = new Intl.NumberFormat("pt-BR", {
 
 export default function CartPage() {
   const { cart, addToCart, removeFromCart, clearProductCompletely } = useCart();
-
-  // Estados locais do formulário de finalização
-  const [paymentMethod, setPaymentMethod] = useState<"pix" | "card" | "cash">(
-    "pix",
-  );
-
-  // Estados locais do formulário de endereço
-  const [address, setAddress] = useState({
-    postalCode: "",
-    street: "",
-    number: "",
-    neighborhood: "",
-    complement: "",
-    city: "",
-    state: "",
-  });
-  const [addresses, setAddresses] = useState<DeliveryAddress[]>([]);
-  const [selectedAddressId, setSelectedAddressId] = useState<string>("");
-  const [addressDialogOpen, setAddressDialogOpen] = useState(false);
-  const [loadingAddresses, setLoadingAddresses] = useState(true);
-  const [addressError, setAddressError] = useState("");
-  const [savingAddress, setSavingAddress] = useState(false);
-
-  // Carregar endereços salvos do usuário ao montar o componente
-  useEffect(() => {
-    getDeliveryAddresses()
-      .then((savedAddresses) => {
-        setAddresses(savedAddresses);
-        const defaultAddress = savedAddresses.find((item) => item.is_default);
-        if (defaultAddress) selectAddress(defaultAddress);
-      })
-      .catch((error) => setAddressError(error.message))
-      .finally(() => setLoadingAddresses(false));
-  }, []);
-
-  const selectAddress = (item: DeliveryAddress) => {
-    setSelectedAddressId(item.id);
-    setAddress({
-      postalCode: item.postal_code,
-      street: item.street,
-      number: item.number,
-      neighborhood: item.neighborhood,
-      complement: item.complement ?? "",
-      city: item.city,
-      state: item.state,
-    });
+  const clearCart = () => {
+    cart.forEach((item) => clearProductCompletely(item.id));
   };
-
-  const addAddress = async (values: DeliveryAddressValues) => {
-    setSavingAddress(true);
-    setAddressError("");
-    try {
-      const savedAddress = await saveDeliveryAddress({
-        label: values.street,
-        recipient_name: "Cliente",
-        phone: null,
-        postal_code: values.postalCode,
-        street: values.street,
-        number: values.number,
-        complement: values.complement || null,
-        neighborhood: values.neighborhood,
-        city: values.city,
-        state: values.state,
-        reference: null,
-        latitude: null,
-        longitude: null,
-        is_default: addresses.length === 0,
-      });
-      setAddresses((current) => [savedAddress, ...current]);
-      selectAddress(savedAddress);
-      setAddressDialogOpen(false);
-    } catch (error) {
-      setAddressError(
-        error instanceof Error ? error.message : "Não foi possível salvar.",
-      );
-    } finally {
-      setSavingAddress(false);
-    }
-  };
+  const createSale = useCreateSale({ onSuccess: clearCart });
+  const {
+    paymentMethod,
+    setPaymentMethod,
+    addresses,
+    selectedAddressId,
+    address,
+    addressDialogOpen,
+    setAddressDialogOpen,
+    loadingAddresses,
+    addressError,
+    savingAddress,
+    selectAddress,
+    addAddress,
+  } = useDeliveryCheckout();
 
   // Cálculos financeiros
   const subtotal = cart.reduce(
@@ -120,12 +54,70 @@ export default function CartPage() {
   const deliveryFee = cart.length > 0 ? 7.0 : 0.0; // Exemplo de taxa de entrega fixa
   const total = subtotal + deliveryFee;
 
-  const handleFinishOrder = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (cart.length === 0) return;
+  const handleFinishOrder = async () => {
+    if (createSale.isPending) return;
 
-    // Lógica para enviar o pedido (ex: integração com backend ou WhatsApp)
-    alert("Pedido enviado com sucesso!");
+    if (cart.length === 0) {
+      toast.error("Seu carrinho está vazio.");
+      return;
+    }
+
+    const invalidProduct = cart.find(
+      (item) =>
+        !Number.isInteger(item.id) ||
+        item.id <= 0 ||
+        !Number.isInteger(item.quantity) ||
+        item.quantity <= 0,
+    );
+
+    if (invalidProduct) {
+      toast.error("Existem itens inválidos no carrinho.");
+      return;
+    }
+
+    if (!selectedAddressId) {
+      toast.error("Selecione um endereço de entrega.");
+      return;
+    }
+
+    const requiredAddressFields = [
+      address.postalCode,
+      address.street,
+      address.number,
+      address.neighborhood,
+      address.city,
+      address.state,
+    ];
+
+    if (requiredAddressFields.some((value) => !value.trim())) {
+      toast.error("O endereço selecionado está incompleto.");
+      return;
+    }
+
+    const paymentByDeliveryMethod = {
+      pix: "PIX",
+      card: "CARTAO_CREDITO",
+      cash: "DINHEIRO",
+    } as const;
+
+    const deliveryAddress = [
+      `${address.street}, ${address.number}`,
+      address.complement ? `Complemento: ${address.complement}` : null,
+      `Bairro: ${address.neighborhood}`,
+      `${address.city} - ${address.state}`,
+      `CEP: ${address.postalCode}`,
+    ]
+      .filter(Boolean)
+      .join(" | ");
+
+    createSale.mutate({
+      payment: paymentByDeliveryMethod[paymentMethod],
+      observation: `Delivery: ${deliveryAddress}`,
+      products: cart.map((item) => ({
+        productId: item.id,
+        quantity: item.quantity,
+      })),
+    });
   };
 
   return (
@@ -363,8 +355,11 @@ export default function CartPage() {
                   <Button
                     size="lg"
                     className="w-full"
+                    disabled={createSale.isPending}
                     onClick={handleFinishOrder}>
-                    Finalizar Pedido
+                    {createSale.isPending
+                      ? "Enviando pedido..."
+                      : "Finalizar Pedido"}
                   </Button>
                 </CardContent>
               </Card>

@@ -6,9 +6,10 @@ import {
   Playfair_Display,
 } from "next/font/google";
 import "./globals.css";
-import { cn } from "@/lib/graphQl/utils";
+import { cn } from "@/services/graphQl/utils";
 import { Providers } from "./providers";
 import { CartProvider } from "../context/CartContext";
+import { Toaster } from "@/components/ui/sonner";
 
 const playfairDisplayHeading = Playfair_Display({
   subsets: ["latin"],
@@ -49,6 +50,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Providers>
           <CartProvider>{children}</CartProvider>
         </Providers>
+        <Toaster richColors closeButton position="top-right" />
       </body>
     </html>
   );
