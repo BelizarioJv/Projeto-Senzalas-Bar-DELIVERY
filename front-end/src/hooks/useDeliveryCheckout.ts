@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getDeliveryAddresses,
@@ -57,16 +57,6 @@ export function useDeliveryCheckout() {
     },
   });
 
-  useEffect(() => {
-    if (selectedAddress || !addressesQuery.data) return;
-
-    const defaultAddress =
-      addressesQuery.data.find((address) => address.is_default) ??
-      addressesQuery.data[0];
-
-    if (defaultAddress) setSelectedAddress(defaultAddress);
-  }, [addressesQuery.data, selectedAddress]);
-
   const selectAddress = (address: DeliveryAddress) => {
     setSelectedAddress(address);
   };
@@ -90,15 +80,21 @@ export function useDeliveryCheckout() {
     });
   };
 
-  const address = selectedAddress
+  const activeAddress =
+    selectedAddress ??
+    addressesQuery.data?.find((item) => item.is_default) ??
+    addressesQuery.data?.[0] ??
+    null;
+
+  const address = activeAddress
     ? {
-        postalCode: selectedAddress.postal_code,
-        street: selectedAddress.street,
-        number: selectedAddress.number,
-        neighborhood: selectedAddress.neighborhood,
-        complement: selectedAddress.complement ?? "",
-        city: selectedAddress.city,
-        state: selectedAddress.state,
+        postalCode: activeAddress.postal_code,
+        street: activeAddress.street,
+        number: activeAddress.number,
+        neighborhood: activeAddress.neighborhood,
+        complement: activeAddress.complement ?? "",
+        city: activeAddress.city,
+        state: activeAddress.state,
       }
     : emptyAddress;
 
@@ -106,7 +102,7 @@ export function useDeliveryCheckout() {
     paymentMethod,
     setPaymentMethod,
     addresses: addressesQuery.data ?? [],
-    selectedAddressId: selectedAddress?.id ?? "",
+    selectedAddressId: activeAddress?.id ?? "",
     address,
     addressDialogOpen,
     setAddressDialogOpen,
