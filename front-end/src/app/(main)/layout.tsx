@@ -2,7 +2,7 @@
 import type { Metadata } from "next";
 import { Providers } from "@/app/providers";
 import { cn } from "@/services/graphQl/utils";
-import { Geist_Mono, Noto_Sans, Playfair_Display } from "next/font/google";
+import { DM_Sans, Geist_Mono, Playfair_Display } from "next/font/google";
 import "@/app/globals.css";
 
 const playfairDisplayHeading = Playfair_Display({
@@ -10,7 +10,7 @@ const playfairDisplayHeading = Playfair_Display({
   variable: "--font-heading",
 });
 
-const notoSans = Noto_Sans({
+const dmSans = DM_Sans({
   subsets: ["latin"],
   variable: "--font-sans",
 });
@@ -36,7 +36,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={cn(
         "h-full w-full antialiased",
-        notoSans.variable,
+        dmSans.variable,
         playfairDisplayHeading.variable,
         geistMono.variable,
       )}>

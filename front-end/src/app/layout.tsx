@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import {
   Geist,
   Geist_Mono,
-  Noto_Sans,
+  DM_Sans,
   Playfair_Display,
 } from "next/font/google";
 import "./globals.css";
@@ -16,7 +16,7 @@ const playfairDisplayHeading = Playfair_Display({
   variable: "--font-heading",
 });
 
-const notoSans = Noto_Sans({ subsets: ["latin"], variable: "--font-sans" });
+const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-sans" });
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -43,7 +43,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         geistSans.variable,
         geistMono.variable,
         "font-sans",
-        notoSans.variable,
+        dmSans.variable,
         playfairDisplayHeading.variable,
       )}>
       <body className="min-h-full flex flex-col">
