@@ -1,34 +1,77 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
-import { useState } from "react";
-import { Minus, Plus, Search, ShoppingBag, Trash2 } from "lucide-react";
-import { useProducts } from "@/hooks/useProducts";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useCart } from "@/context/CartContext";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Search } from "lucide-react";
 import { useRouter } from "next/navigation";
-import type { Product } from "@/types/product";
+import { useCart } from "@/context/CartContext";
+import {
+  CategoryNavigation,
+  HeroBanner,
+  ProductGrid,
+  ProductSkeletons,
+} from "@/components/home";
+import { CartSummary, MobileCartBar } from "@/components/cart";
+import { StoreFooter, StoreHeader } from "@/components/layout";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useProductQuantities } from "@/hooks/useProductQuantities";
-
-const currency = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-});
+import { useProducts } from "@/hooks/useProducts";
+import type { Product } from "@/types/product";
+import { ALL, FEATURED_LIMIT, getProductCategory, normalize } from "@/components/home/home-utils";
 
 export default function Home() {
   const router = useRouter();
   const { data, isLoading, isError, refetch } = useProducts();
-  const [search, setSearch] = useState("");
-  const { cart, addToCart, removeFromCart, clearProductCompletely } = useCart();
+  const { cart, addToCart } = useCart();
   const { getSelectedQuantity, incrementQuantity, decrementQuantity } =
     useProductQuantities();
 
-  const products = (data?.products ?? []).filter((product) =>
-    product.name.toLowerCase().includes(search.toLowerCase()),
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState<string>(ALL);
+  const [addedId, setAddedId] = useState<Product["id"] | null>(null);
+  const addedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (addedTimer.current) clearTimeout(addedTimer.current);
+    };
+  }, []);
+
+  const allProducts = useMemo<Product[]>(
+    () => data?.products ?? [],
+    [data?.products],
+  );
+
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    allProducts.forEach((product) => {
+      const name = getProductCategory(product);
+      if (name) set.add(name);
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b, "pt-BR"));
+  }, [allProducts]);
+
+  const stockById = useMemo(
+    () => new Map(allProducts.map((product) => [product.id, product.quantity])),
+    [allProducts],
+  );
+
+  const filteredProducts = useMemo(() => {
+    const term = normalize(search.trim());
+    return allProducts.filter((product) => {
+      const matchesSearch = normalize(product.name).includes(term);
+      const matchesCategory =
+        category === ALL || getProductCategory(product) === category;
+      return matchesSearch && matchesCategory;
+    });
+  }, [allProducts, search, category]);
+
+  const featuredProducts = useMemo(
+    () =>
+      allProducts
+        .filter((product) => product.quantity > 0 && product.imageUrl)
+        .slice(0, FEATURED_LIMIT),
+    [allProducts],
   );
 
   const total = cart.reduce(
@@ -36,242 +79,133 @@ export default function Home() {
     0,
   );
   const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
-
   const handleAddToCart = (product: Product) => {
     const qty = getSelectedQuantity(product.id);
     addToCart({ ...product, quantity: qty });
+
+    setAddedId(product.id);
+    if (addedTimer.current) clearTimeout(addedTimer.current);
+    addedTimer.current = setTimeout(() => setAddedId(null), 1500);
   };
 
+  const gridProps = {
+    getSelectedQuantity,
+    incrementQuantity,
+    decrementQuantity,
+    addedId,
+    onAdd: handleAddToCart,
+  };
+
+  const showFeatured =
+    !isLoading && !isError && featuredProducts.length > 0 && !search;
+
   return (
-    <main className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-foreground text-background">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 lg:px-8">
-          <div className="flex items-center gap-2">
-            <Image
-              src="/LogoSenzalasBar.png"
-              alt="SenzalasBar"
-              width={150}
-              height={44}
-              priority
-            />
-          </div>
-          <div className="flex items-center gap-2 text-sm text-background/80">
-            <Link href="/carrinho" className="flex items-center gap-2">
-              <ShoppingBag className="size-5 text-primary" />
-              <span>{itemCount} item(ns)</span>
-            </Link>
-          </div>
-        </div>
-      </header>
+    <main className="min-h-screen bg-background pb-24 lg:pb-0">
+      <StoreHeader search={search} onSearchChange={setSearch} />
+      <HeroBanner />
+      <CategoryNavigation
+        categories={categories}
+        selected={category}
+        onSelect={setCategory}
+      />
 
-      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 lg:grid-cols-[1fr_360px] lg:px-8">
-        {/* Hero */}
-        <section>
-          <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="mb-2 text-sm font-medium uppercase tracking-widest text-primary">
-                Cardápio
-              </p>
-              <h1 className="font-heading text-4xl font-semibold tracking-tight">
-                Escolha seus produtos
-              </h1>
-              <p className="mt-2 text-muted-foreground">
-                Monte seu pedido com os favoritos da casa.
-              </p>
-            </div>
-            <div className="relative w-full sm:max-w-xs">
-              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Buscar produto"
-                className="pl-9"
-              />
-            </div>
-          </div>
-
-          {isLoading && (
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {[1, 2, 3].map((item) => (
-                <Skeleton key={item} className="h-48" />
-              ))}
-            </div>
-          )}
-
-          {isError && (
-            <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-6 text-destructive">
-              Não foi possível carregar os produtos.{" "}
-              <Button
-                variant="outline"
-                onClick={() => refetch()}
-                className="ml-2">
-                Tentar novamente
-              </Button>
-            </div>
-          )}
-
-          {!isLoading && !isError && products.length === 0 && (
-            <p className="text-muted-foreground">Nenhum produto encontrado.</p>
-          )}
-
-          {/* Grid com os Produtos */}
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {products.map((product) => {
-              const selectedQty = getSelectedQuantity(product.id);
-              const isOutOfStock = product.quantity === 0;
-
-              return (
-                //Card do produto
-                <Card
-                  key={product.id}
-                  className="overflow-hidden transition-shadow hover:shadow-md">
-                  <div className="flex h-28 items-center justify-center bg-primary/10 text-4xl">
-                    {product.imageUrl ? (
-                      <img
-                        src={product.imageUrl}
-                        alt={product.name}
-                        className="size-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-sm font-medium text-muted-foreground">
-                        Sem imagem
-                      </span>
-                    )}
-                  </div>
-                  <CardContent className="p-4">
-                    <h2 className="font-semibold">{product.name}</h2>
-                    <p className="mt-1 text-lg font-bold text-primary">
-                      {currency.format(product.salePrice)}
-                    </p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {product.quantity} disponível(is)
-                    </p>
-
-                    {/* Controles de seleção de quantidade e botão de adicionar */}
-                    <div className="mt-4 flex flex-col gap-2">
-                      <div className="flex items-center justify-between rounded-md border p-1">
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="size-8"
-                          disabled={isOutOfStock || selectedQty <= 1}
-                          onClick={() => decrementQuantity(product.id)}>
-                          <Minus className="size-4" />
-                        </Button>
-
-                        <span className="text-sm font-medium">
-                          {selectedQty}
-                        </span>
-
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="size-8"
-                          disabled={
-                            isOutOfStock || selectedQty >= product.quantity
-                          }
-                          onClick={() =>
-                            incrementQuantity(product.id, product.quantity)
-                          }>
-                          <Plus className="size-4" />
-                        </Button>
-                      </div>
-
-                      <Button
-                        className="w-full"
-                        disabled={isOutOfStock}
-                        onClick={() => handleAddToCart(product)}>
-                        <Plus className="mr-1 size-4" />
-                        {isOutOfStock ? "Esgotado" : "Adicionar ao carrinho"}
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* Carrinho */}
-        <aside>
-          <Card className="sticky top-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ShoppingBag className="size-5 text-primary" />
-                Seu pedido
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {cart.length === 0 ? (
-                <p className="py-8 text-center text-sm text-muted-foreground">
-                  Seu carrinho está vazio.
+      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 lg:grid-cols-[1fr_340px] lg:px-8">
+        <div className="min-w-0 space-y-12">
+          {/* Destaques */}
+          {showFeatured && (
+            <section id="destaques" className="scroll-mt-28">
+              <div className="mb-5">
+                <h2 className="font-heading text-2xl font-semibold tracking-tight sm:text-3xl">
+                  Escolhidos para você
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Uma seleção de produtos disponíveis agora.
                 </p>
-              ) : (
-                <div className="space-y-4">
-                  {cart.map((item) => (
-                    <div key={item.id} className="border-b pb-4">
-                      <div className="flex justify-between gap-3">
-                        <span className="font-medium">{item.name}</span>
-                        <span>
-                          {currency.format(item.salePrice * item.quantity)}
-                        </span>
-                      </div>
-                      <div className="mt-3 flex items-center justify-between">
-                        <div className="flex items-center gap-1 rounded-md border p-1">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="size-7"
-                            onClick={() => removeFromCart(item.id, 1)}>
-                            <Minus className="size-3" />
-                          </Button>
-                          <span className="w-6 text-center text-sm font-medium">
-                            {item.quantity}
-                          </span>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="size-7"
-                            disabled={item.quantity >= item.quantity}
-                            onClick={() =>
-                              addToCart({
-                                ...item,
-                                quantity: item.quantity + 1,
-                              })
-                            }>
-                            <Plus className="size-3" />
-                          </Button>
-                        </div>
+              </div>
+              <ProductGrid products={featuredProducts} {...gridProps} />
+            </section>
+          )}
 
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="size-8 text-destructive hover:text-destructive"
-                          onClick={() => clearProductCompletely(item.id)}>
-                          <Trash2 className="size-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                  <div className="flex items-center justify-between pt-2 text-lg font-bold">
-                    <span>Total</span>
-                    <span className="text-primary">
-                      {currency.format(total)}
-                    </span>
-                  </div>
+          {/* Todos os produtos */}
+          <section id="produtos" className="scroll-mt-28">
+            <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h2 className="font-heading text-2xl font-semibold tracking-tight sm:text-3xl">
+                  Todos os produtos
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {category === ALL
+                    ? "Todo o cardápio da casa em um só lugar."
+                    : `Mostrando: ${category}`}
+                </p>
+              </div>
+              <div className="relative w-full sm:max-w-xs">
+                <Search className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Buscar produto"
+                  aria-label="Buscar produto no catálogo"
+                  className="h-11 rounded-full pl-11"
+                />
+              </div>
+            </div>
+
+            {isLoading && <ProductSkeletons />}
+
+            {isError && (
+              <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-6 text-destructive">
+                <span>Não foi possível carregar os produtos.</span>
+                <Button variant="outline" onClick={() => refetch()}>
+                  Tentar novamente
+                </Button>
+              </div>
+            )}
+
+            {!isLoading && !isError && filteredProducts.length === 0 && (
+              <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed py-14 text-center">
+                <Search className="size-8 text-muted-foreground" />
+                <p className="font-medium">Nenhum produto encontrado</p>
+                <p className="text-sm text-muted-foreground">
+                  Tente outro nome ou limpe os filtros.
+                </p>
+                {(search || category !== ALL) && (
                   <Button
-                    className="w-full"
-                    size="lg"
-                    onClick={() => router.push("/carrinho")}>
-                    Continuar pedido
+                    variant="outline"
+                    className="rounded-full"
+                    onClick={() => {
+                      setSearch("");
+                      setCategory(ALL);
+                    }}>
+                    Limpar filtros
                   </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                )}
+              </div>
+            )}
+
+            {!isLoading && !isError && filteredProducts.length > 0 && (
+              <ProductGrid products={filteredProducts} {...gridProps} />
+            )}
+          </section>
+        </div>
+
+        {/* Carrinho (desktop) */}
+        <aside className="hidden lg:block" aria-label="Resumo do pedido">
+          <CartSummary
+            stockById={stockById}
+            onContinue={() => router.push("/carrinho")}
+          />
         </aside>
       </div>
+
+      <StoreFooter />
+
+      {/* Carrinho (mobile) */}
+      <MobileCartBar
+        itemCount={itemCount}
+        total={total}
+        onOpen={() => router.push("/carrinho")}
+      />
     </main>
   );
 }

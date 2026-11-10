@@ -1,17 +1,15 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowLeft,
   CreditCard,
   DollarSign,
-  Minus,
-  Plus,
   QrCode,
   ShoppingBag,
-  Trash2,
 } from "lucide-react";
+import { CartItem } from "@/components/cart";
+import { StoreFooter, StoreHeader } from "@/components/layout";
 import { useCart } from "@/context/CartContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,11 +17,7 @@ import DeliveryAddressDialog from "@/components/DeliveryAddressDialog";
 import { useCreateSale } from "@/hooks/useCreateSale";
 import { toast } from "sonner";
 import { useDeliveryCheckout } from "@/hooks/useDeliveryCheckout";
-
-const currency = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-});
+import { currency } from "@/utils/currency";
 
 export default function CartPage() {
   // Contexto do Carrinho e Checkout
@@ -131,117 +125,90 @@ export default function CartPage() {
 
   return (
     <main className="min-h-screen bg-background pb-12">
-      {/* Header simples */}
-      <header className="border-b bg-foreground text-background">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 lg:px-8">
+      <StoreHeader />
+
+      <section
+        aria-labelledby="cart-title"
+        className="relative overflow-hidden bg-foreground text-background">
+        <div className="pointer-events-none absolute -right-24 -top-24 size-80 rounded-full bg-primary/25 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-32 left-1/3 size-72 rounded-full bg-primary/10 blur-3xl" />
+        <div className="relative mx-auto flex max-w-7xl flex-col gap-4 px-4 py-10 sm:py-14 lg:px-8">
           <Link
             href="/home"
-            className="flex items-center gap-2 text-sm transition-colors hover:text-primary">
+            className="inline-flex w-fit items-center gap-2 text-sm text-white/70 transition-colors hover:text-primary">
             <ArrowLeft className="size-4" />
             Voltar ao cardápio
           </Link>
-          <div className="flex items-center gap-2">
-            <Image
-              src="/LogoSenzalasBar.png"
-              alt="SenzalasBar"
-              width={150}
-              height={44}
-              priority
-            />
+          <div className="flex items-center gap-4">
+            <div className="flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/20">
+              <ShoppingBag className="size-7" />
+            </div>
+            <div>
+              <h1
+                id="cart-title"
+                className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
+                Meu carrinho
+              </h1>
+              <p className="mt-1 text-sm text-white/70 sm:text-base">
+                Confira seu pedido e escolha como receber.
+              </p>
+            </div>
           </div>
         </div>
-      </header>
+      </section>
 
-      <div className="mx-auto max-w-7xl px-4 pt-8 lg:px-8">
-        <h1 className="font-heading text-3xl font-semibold tracking-tight">
-          Meu Carrinho
-        </h1>
-
+      <div className="mx-auto max-w-7xl px-4 py-8 lg:px-8">
         {cart.length === 0 ? (
           /* Estado carrinho vazio */
-          <div className="mt-12 flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-            <ShoppingBag className="size-16 text-muted-foreground/50" />
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed bg-card p-12 text-center shadow-sm">
+            <div className="flex size-20 items-center justify-center rounded-full bg-primary/10">
+              <ShoppingBag className="size-9 text-primary" />
+            </div>
             <h2 className="mt-4 text-xl font-semibold">
               Seu carrinho está vazio
             </h2>
             <p className="mt-2 text-sm text-muted-foreground">
               Você ainda não adicionou nenhum item do nosso cardápio.
             </p>
-            <Button className="mt-6">
-              <Link href="/home">Ver cardápio</Link>
-            </Button>
+            <Link
+              href="/home"
+              className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">
+              Ver cardápio
+            </Link>
           </div>
         ) : (
           /* Conteúdo do Carrinho com Itens */
-          <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_400px]">
+          <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
             {/* Lista de Produtos + Formulários */}
             <div className="space-y-6">
               {/* Card de Produtos Escolhidos */}
-              <Card>
+              <Card className="rounded-2xl border-0 shadow-sm ring-1 ring-foreground/10">
                 <CardHeader>
-                  <CardTitle className="text-lg">Itens do Pedido</CardTitle>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <ShoppingBag className="size-5 text-primary" />
+                    Itens do pedido
+                    <span className="text-sm font-normal text-muted-foreground">
+                      ({cart.reduce((sum, item) => sum + item.quantity, 0)})
+                    </span>
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="divide-y">
                   {cart.map((item) => (
-                    <div
+                    <CartItem
                       key={item.id}
-                      className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="flex-1">
-                        <h3 className="font-medium">{item.name}</h3>
-                        <p className="text-sm font-semibold text-primary">
-                          {currency.format(item.salePrice)} un.
-                        </p>
-                      </div>
-
-                      <div className="flex items-center justify-between gap-4 sm:justify-end">
-                        {/* Controles de Quantidade */}
-                        <div className="flex items-center gap-1 rounded-md border p-1">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="size-7"
-                            onClick={() => removeFromCart(item.id, 1)}>
-                            <Minus className="size-3" />
-                          </Button>
-                          <span className="w-8 text-center text-sm font-medium">
-                            {item.quantity}
-                          </span>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="size-7"
-                            disabled={item.quantity >= item.quantity}
-                            onClick={() =>
-                              addToCart({
-                                ...item,
-                                quantity: item.quantity + 1,
-                              })
-                            }>
-                            <Plus className="size-3" />
-                          </Button>
-                        </div>
-
-                        {/* Subtotal do Item */}
-                        <span className="w-24 text-right font-semibold">
-                          {currency.format(item.salePrice * item.quantity)}
-                        </span>
-
-                        {/* Botão Deletar */}
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="size-8 text-destructive hover:text-destructive"
-                          onClick={() => clearProductCompletely(item.id)}>
-                          <Trash2 className="size-4" />
-                        </Button>
-                      </div>
-                    </div>
+                      product={item}
+                      onDecrement={() => removeFromCart(item.id, 1)}
+                      onIncrement={() =>
+                        addToCart({ ...item, quantity: item.quantity + 1 })
+                      }
+                      onRemove={() => clearProductCompletely(item.id)}
+                    />
                   ))}
                 </CardContent>
               </Card>
 
               {/* Endereço de Entrega */}
-              <Card>
+              <Card className="rounded-2xl border-0 shadow-sm ring-1 ring-foreground/10">
                 <CardHeader className="flex-row items-center justify-between space-y-0">
                   <div>
                     <CardTitle className="text-lg">
@@ -287,7 +254,7 @@ export default function CartPage() {
               </Card>
 
               {/* Pagamento */}
-              <Card>
+              <Card className="rounded-2xl border-0 shadow-sm ring-1 ring-foreground/10">
                 <CardHeader>
                   <CardTitle className="text-lg">Forma de Pagamento</CardTitle>
                 </CardHeader>
@@ -296,7 +263,7 @@ export default function CartPage() {
                     <button
                       type="button"
                       onClick={() => setPaymentMethod("pix")}
-                      className={`flex flex-col items-center justify-center gap-2 rounded-lg border p-4 text-center transition-colors ${
+                      className={`flex flex-col items-center justify-center gap-2 rounded-2xl border p-4 text-center transition-colors ${
                         paymentMethod === "pix" ||
                         paymentMethod === "online_card"
                           ? "border-primary bg-primary/10 font-semibold text-primary"
@@ -309,7 +276,7 @@ export default function CartPage() {
                     <button
                       type="button"
                       onClick={() => setPaymentMethod("delivery_card")}
-                      className={`flex flex-col items-center justify-center gap-2 rounded-lg border p-4 text-center transition-colors ${
+                      className={`flex flex-col items-center justify-center gap-2 rounded-2xl border p-4 text-center transition-colors ${
                         paymentMethod === "delivery_card" ||
                         paymentMethod === "cash"
                           ? "border-primary bg-primary/10 font-semibold text-primary"
@@ -326,7 +293,7 @@ export default function CartPage() {
                       <button
                         type="button"
                         onClick={() => setPaymentMethod("pix")}
-                        className={`flex flex-col items-center justify-center gap-2 rounded-lg border p-4 ${
+                        className={`flex flex-col items-center justify-center gap-2 rounded-2xl border p-4 ${
                           paymentMethod === "pix"
                             ? "border-primary bg-primary/10 font-semibold text-primary"
                             : "border-input hover:bg-accent"
@@ -338,7 +305,7 @@ export default function CartPage() {
                       <button
                         type="button"
                         onClick={() => setPaymentMethod("online_card")}
-                        className={`flex flex-col items-center justify-center gap-2 rounded-lg border p-4 ${
+                        className={`flex flex-col items-center justify-center gap-2 rounded-2xl border p-4 ${
                           paymentMethod === "online_card"
                             ? "border-primary bg-primary/10 font-semibold text-primary"
                             : "border-input hover:bg-accent"
@@ -355,7 +322,7 @@ export default function CartPage() {
                       <button
                         type="button"
                         onClick={() => setPaymentMethod("delivery_card")}
-                        className={`flex flex-col items-center justify-center gap-2 rounded-lg border p-4 ${
+                        className={`flex flex-col items-center justify-center gap-2 rounded-2xl border p-4 ${
                           paymentMethod === "delivery_card"
                             ? "border-primary bg-primary/10 font-semibold text-primary"
                             : "border-input hover:bg-accent"
@@ -367,7 +334,7 @@ export default function CartPage() {
                       <button
                         type="button"
                         onClick={() => setPaymentMethod("cash")}
-                        className={`flex flex-col items-center justify-center gap-2 rounded-lg border p-4 ${
+                        className={`flex flex-col items-center justify-center gap-2 rounded-2xl border p-4 ${
                           paymentMethod === "cash"
                             ? "border-primary bg-primary/10 font-semibold text-primary"
                             : "border-input hover:bg-accent"
@@ -383,7 +350,7 @@ export default function CartPage() {
 
             {/* Sidebar de Resumo do Pedido */}
             <aside>
-              <Card className="sticky top-6">
+              <Card className="sticky top-24 rounded-2xl border-0 shadow-md ring-1 ring-foreground/10">
                 <CardHeader>
                   <CardTitle className="text-lg">Resumo</CardTitle>
                 </CardHeader>
@@ -411,7 +378,7 @@ export default function CartPage() {
 
                   <Button
                     size="lg"
-                    className="w-full"
+                    className="h-12 w-full rounded-full text-base"
                     disabled={createSale.isPending}
                     onClick={handleFinishOrder}>
                     {createSale.isPending
@@ -424,6 +391,7 @@ export default function CartPage() {
           </div>
         )}
       </div>
+      <StoreFooter />
     </main>
   );
 }
