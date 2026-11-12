@@ -2,20 +2,29 @@ import { deliveryIdempotencyKeySchema, deliverySaleSchema, deliveryCheckoutSchem
 import { createSale } from "../services/erp-sale.service.js";
 import { createCheckoutPreference } from "../services/mercado-pago.service.js";
 import { Payment } from "mercadopago";
-import { createHmac } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 function isValidWebhookSignature(req) {
     const secret = process.env.MERCADO_PAGO_WEBHOOK_SECRET;
     if (!secret)
-        return true;
+        return false;
     const signature = req.header("x-signature");
     const requestId = req.header("x-request-id");
     if (!signature || !requestId)
         return false;
-    const parts = Object.fromEntries(signature.split(",").map((part) => part.trim().split("=")));
+    const parts = Object.fromEntries(signature
+        .split(",")
+        .map((part) => part.trim().split("=", 2))
+        .filter((part) => part.length === 2 && Boolean(part[0]) && Boolean(part[1])));
+    if (!parts.ts || !parts.v1 || !/^[a-f\d]{64}$/i.test(parts.v1)) {
+        return false;
+    }
     const paymentId = req.body?.data?.id ?? req.body?.id;
+    if (paymentId === undefined || paymentId === null)
+        return false;
     const manifest = `id:${paymentId};request_id:${requestId};ts:${parts.ts};`;
-    const expected = createHmac("sha256", secret).update(manifest).digest("hex");
-    return expected === parts.v1;
+    const expected = createHmac("sha256", secret).update(manifest).digest();
+    const received = Buffer.from(parts.v1, "hex");
+    return received.length === expected.length && timingSafeEqual(received, expected);
 }
 export const createDeliverySale = async (req, res, next) => {
     try {

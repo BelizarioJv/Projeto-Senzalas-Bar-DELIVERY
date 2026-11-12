@@ -333,7 +333,8 @@ DELIVERY/
 │   │
 │   ├── prisma/
 │   │
-│   ├── app.ts
+│   ├── http/
+│   │   └── app.ts
 │   └── server.ts
 │
 ├── prisma/
@@ -443,17 +444,19 @@ Essa separação reduz o acoplamento entre os sistemas.
 
 # 🧪 Testes
 
-O projeto deverá possuir testes para as principais regras de negócio.
+O backend do Delivery usa Vitest e Supertest para testes automatizados das rotas
+de venda e checkout. As integrações com o ERP e o Mercado Pago são mockadas para
+os testes não dependerem de serviços externos.
 
-Áreas planejadas:
+Execute os testes em `DELIVERY/backend`:
 
-* Autenticação
-* Consulta de produtos
-* Criação de pedidos
-* Validação de quantidade
-* Integração com o ERP
-* Regras de negócio
-* Resolvers GraphQL
+```bash
+npm test
+npm run test:watch
+```
+
+Os cenários cobrem validação de payload e idempotency key, assinatura do webhook
+e processamento de pagamentos aprovados.
 
 ---
 
