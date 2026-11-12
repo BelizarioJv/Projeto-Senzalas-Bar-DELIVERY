@@ -6,9 +6,13 @@ import { ApolloServer } from "@apollo/server";
 import { resolvers } from "./graphql/resolver/resolvers.js";
 import { typeDefs } from "./graphql/schema/schema.js";
 import { deliverySaleRouter } from "./routes/deliverySaleRoutes.js";
+import { connectRedis } from "./services/redis-cache.service.js";
 
 //Inicalizaçao do server
 const app = express();
+
+// Inicializaçao do Apollo Server e Redis
+connectRedis();
 
 const apollo = new ApolloServer({ typeDefs, resolvers });
 await apollo.start();

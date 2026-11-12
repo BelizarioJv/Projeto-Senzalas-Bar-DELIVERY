@@ -164,6 +164,31 @@ Isso evita que os resolvers GraphQL precisem conhecer diretamente os detalhes da
 
 ---
 
+## ⚡ Cache de produtos com Redis
+
+O Delivery usa o Redis como cache temporário do catálogo consultado pelo GraphQL.
+As listas e consultas individuais de produto ficam em cache por 60 segundos. Em
+caso de cache vazio ou indisponibilidade do Redis, o serviço consulta o ERP e
+registra o erro do cache no backend.
+
+O Redis é iniciado separadamente na pasta `DELIVERY`:
+
+```bash
+docker compose up -d redis
+```
+
+O backend do Delivery, executado localmente, conecta por padrão em
+`redis://127.0.0.1:6379`. Para usar outro endereço, defina `REDIS_URL` no
+ambiente do backend. Para parar o Redis, execute `docker compose down` na pasta
+`DELIVERY`.
+
+A consulta de produtos do catálogo pode usar o cache; a busca de produto usada
+na criação do pagamento continua consultando diretamente o ERP, para verificar
+preço e estoque atuais. O Redis não é a fonte oficial dos dados e não persiste
+o catálogo.
+
+---
+
 ## 🔷 GraphQL
 
 O Delivery utiliza GraphQL como camada de comunicação com o frontend.
