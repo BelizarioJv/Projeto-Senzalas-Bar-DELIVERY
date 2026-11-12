@@ -3,8 +3,10 @@ import express, {
   type ErrorRequestHandler,
   type RequestHandler,
 } from "express";
+import swaggerUi from "swagger-ui-express";
 import { ZodError } from "zod";
 import { deliverySaleRouter } from "../routes/deliverySaleRoutes.js";
+import { openApiDocument } from "../docs/openapi.js";
 
 // Error handler middleware
 const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
@@ -34,6 +36,10 @@ export function createApp(graphqlMiddleware?: RequestHandler) {
     app.use("/graphql", graphqlMiddleware);
   }
 
+  app.get("/api-docs.json", (_req, res) => {
+    res.json(openApiDocument);
+  });
+  app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(openApiDocument));
   app.use("/delivery/sales", deliverySaleRouter);
   app.use(errorHandler);
 

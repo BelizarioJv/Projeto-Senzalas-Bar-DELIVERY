@@ -1,7 +1,9 @@
 import cors from "cors";
 import express from "express";
+import swaggerUi from "swagger-ui-express";
 import { ZodError } from "zod";
 import { deliverySaleRouter } from "../routes/deliverySaleRoutes.js";
+import { openApiDocument } from "../docs/openapi.js";
 // Error handler middleware
 const errorHandler = (error, _req, res, _next) => {
     if (error instanceof ZodError) {
@@ -25,6 +27,10 @@ export function createApp(graphqlMiddleware) {
     if (graphqlMiddleware) {
         app.use("/graphql", graphqlMiddleware);
     }
+    app.get("/api-docs.json", (_req, res) => {
+        res.json(openApiDocument);
+    });
+    app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(openApiDocument));
     app.use("/delivery/sales", deliverySaleRouter);
     app.use(errorHandler);
     return app;

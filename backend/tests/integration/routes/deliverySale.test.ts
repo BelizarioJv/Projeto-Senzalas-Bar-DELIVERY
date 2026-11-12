@@ -54,6 +54,40 @@ describe("delivery sale routes", () => {
     vi.clearAllMocks();
   });
 
+  // Testes de documentação da API
+  it("serves the generated OpenAPI document with all REST sale routes", async () => {
+    const response = await request(app).get("/api-docs.json");
+
+    expect(response.status).toBe(200);
+    expect(response.body.paths).toHaveProperty("/delivery/sales");
+    expect(response.body.paths).toHaveProperty("/delivery/sales/checkout");
+    expect(response.body.paths).toHaveProperty(
+      "/delivery/sales/payments/webhooks/mercado-pago",
+    );
+    expect(response.body.components.schemas).toHaveProperty(
+      "DeliverySaleRequest",
+    );
+    expect(response.body.components.schemas).toHaveProperty(
+      "DeliveryCheckoutRequest",
+    );
+    expect(response.body.paths["/delivery/sales"].post.parameters).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: "Idempotency-Key",
+          in: "header",
+          required: true,
+        }),
+      ]),
+    );
+  });
+
+  it("serves the Swagger UI", async () => {
+    const response = await request(app).get("/api-docs/");
+
+    expect(response.status).toBe(200);
+    expect(response.text).toContain("swagger-ui");
+  });
+
   it("creates an ERP sale with a valid idempotency key", async () => {
     mocks.createSale.mockResolvedValue({ id: 12 });
 

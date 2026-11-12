@@ -222,6 +222,18 @@ Product Data
 
 Essa abordagem permite que o frontend solicite apenas os campos necessários.
 
+### Documentação da API
+
+As rotas REST de vendas e pagamentos são documentadas com OpenAPI gerado a partir
+dos schemas Zod. Com o backend em execução:
+
+- Swagger UI: `http://localhost:8081/api-docs`
+- OpenAPI JSON: `http://localhost:8081/api-docs.json`
+
+O GraphQL não precisa ser descrito novamente no Swagger. Seu contrato é o schema
+GraphQL servido no endpoint `http://localhost:8081/graphql`, que pode ser
+explorado com introspection e pela interface de desenvolvimento do Apollo.
+
 ---
 
 # 🔐 Autenticação
